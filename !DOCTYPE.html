@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON MINESWEEPER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0b2e 50%, #16003b 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: #ff006e;
+            text-shadow: 
+                0 0 10px #ff006e,
+                0 0 20px #ff006e,
+                0 0 30px #ff006e,
+                0 0 40px #8b00ff;
+            margin-bottom: 10px;
+            animation: glitch 3s infinite;
+            letter-spacing: 3px;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% {
+                transform: translate(0);
+            }
+            92% {
+                transform: translate(-2px, 2px);
+            }
+            94% {
+                transform: translate(2px, -2px);
+            }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: rgba(139, 0, 255, 0.2);
+            border: 2px solid #8b00ff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: #00ffff;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            box-shadow: 
+                0 0 10px rgba(139, 0, 255, 0.5),
+                inset 0 0 10px rgba(139, 0, 255, 0.2);
+            min-width: 100px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #ff006e;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #8b00ff 0%, #ff006e 100%);
+            border: 2px solid #00ffff;
+            color: #ffffff;
+            padding: 12px 24px;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            box-shadow: 
+                0 0 15px rgba(139, 0, 255, 0.6),
+                0 0 30px rgba(255, 0, 110, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 0 25px rgba(139, 0, 255, 0.8),
+                0 0 40px rgba(255, 0, 110, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .difficulty {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .difficulty button {
+            padding: 8px 16px;
+            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+        }
+
+        .difficulty button.active {
+            background: linear-gradient(135deg, #00ffff 0%, #ff006e 100%);
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.8),
+                inset 0 0 10px rgba(255, 0, 110, 0.5);
+        }
+
+        .board {
+            display: inline-grid;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            border: 3px solid #00ffff;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.5),
+                inset 0 0 20px rgba(139, 0, 255, 0.2);
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: clamp(25px, 5vw, 40px);
+            height: clamp(25px, 5vw, 40px);
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%);
+            border: 2px solid #8b00ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: clamp(0.8rem, 2vw, 1.2rem);
+            transition: all 0.2s;
+            position: relative;
+            box-shadow: 0 0 5px rgba(139, 0, 255, 0.3);
+        }
+
+        .cell:hover:not(.revealed):not(.flagged) {
+            background: linear-gradient(135deg, #2d1b4e 0%, #4a2d7e 100%);
+            box-shadow: 0 0 15px rgba(139, 0, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        .cell.revealed {
+            background: linear-gradient(135deg, #0a0e27 0%, #16003b 100%);
+            border-color: #00ffff;
+            cursor: default;
+            box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .cell.flagged {
+            background: linear-gradient(135deg, #ff006e 0%, #8b00ff 100%);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+        }
+
+        .cell.flagged::before {
+            content: '🚩';
+            font-size: 0.8em;
+        }
+
+        .cell.mine {
+            background: linear-gradient(135deg, #ff006e 0%, #ff0000 100%);
+            animation: explode 0.5s;
+        }
+
+        .cell.mine::before {
+            content: '💣';
+            font-size: 0.9em;
+        }
+
+        @keyframes explode {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .cell[data-count="1"] { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+        .cell[data-count="2"] { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        .cell[data-count="3"] { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+        .cell[data-count="4"] { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        .cell[data-count="5"] { color: #ff6600; text-shadow: 0 0 10px #ff6600; }
+        .cell[data-count="6"] { color: #ff0066; text-shadow: 0 0 10px #ff0066; }
+        .cell[data-count="7"] { color: #ffffff; text-shadow: 0 0 10px #ffffff; }
+        .cell[data-count="8"] { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .game-over-overlay.show {
+            display: flex;
+        }
+
+        .game-over-message {
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%);
+            border: 3px solid #ff006e;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 
+                0 0 50px rgba(255, 0, 110, 0.8),
+                inset 0 0 30px rgba(139, 0, 255, 0.3);
+            animation: popIn 0.5s;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .game-over-message h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 20px;
+            color: #ff006e;
+            text-shadow: 0 0 20px #ff006e;
+        }
+
+        .game-over-message.win h2 {
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        @media (max-width: 600px) {
+            .stats {
+                font-size: 0.9rem;
+            }
+            
+            .board {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <div class="container">
+        <h1>⚡ NEON MINESWEEPER ⚡</h1>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">MINES</div>
+                <div id="minesLeft">10</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">TIME</div>
+                <div id="timer">0</div>
+            </div>
+        </div>
+
+        <div class="difficulty">
+            <button class="active" onclick="setDifficulty('easy')">EASY</button>
+            <button onclick="setDifficulty('medium')">MEDIUM</button>
+            <button onclick="setDifficulty('hard')">HARD</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="newGame()">🎮 NEW GAME</button>
+        </div>
+
+        <div id="board" class="board"></div>
+    </div>
+
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-message" id="gameOverMessage">
+            <h2 id="gameOverText">GAME OVER</h2>
+            <button onclick="newGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        let board = [];
+        let rows = 9;
+        let cols = 9;
+        let mines = 10;
+        let gameOver = false;
+        let firstClick = true;
+        let flagsPlaced = 0;
+        let cellsRevealed = 0;
+        let timerInterval;
+        let timeElapsed = 0;
+        let difficulty = 'easy';
+
+        const difficulties = {
+            easy: { rows: 9, cols: 9, mines: 10 },
+            medium: { rows: 12, cols: 12, mines: 25 },
+            hard: { rows: 16, cols: 16, mines: 50 }
+        };
+
+        function setDifficulty(level) {
+            difficulty = level;
+            const buttons = document.querySelectorAll('.difficulty button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const config = difficulties[level];
+            rows = config.rows;
+            cols = config.cols;
+            mines = config.mines;
+            
+            newGame();
+        }
+
+        function newGame() {
+            board = [];
+            gameOver = false;
+            firstClick = true;
+            flagsPlaced = 0;
+            cellsRevealed = 0;
+            timeElapsed = 0;
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = '0';
+            document.getElementById('minesLeft').textContent = mines;
+            document.getElementById('gameOverOverlay').classList.remove('show');
+            
+            initBoard();
+        }
+
+        function initBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            for (let r = 0; r < rows; r++) {
+                board[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    board[r][c] = {
+                        mine: false,
+                        revealed: false,
+                        flagged: false,
+                        count: 0
+                    };
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    cell.addEventListener('click', () => handleClick(r, c));
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleFlag(r, c);
+                    });
+                    
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function placeMines(excludeRow, excludeCol) {
+            let minesPlaced = 0;
+            while (minesPlaced < mines) {
+                const r = Math.floor(Math.random() * rows);
+                const c = Math.floor(Math.random() * cols);
+                
+                if (!board[r][c].mine && !(r === excludeRow && c === excludeCol)) {
+                    board[r][c].mine = true;
+                    minesPlaced++;
+                }
+            }
+            
+            calculateNumbers();
+        }
+
+        function calculateNumbers() {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (!board[r][c].mine) {
+                        let count = 0;
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                const nr = r + dr;
+                                const nc = c + dc;
+                                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc].mine) {
+                                    count++;
+                                }
+                            }
+                        }
+                        board[r][c].count = count;
+                    }
+                }
+            }
+        }
+
+        function handleClick(r, c) {
+            if (gameOver || board[r][c].revealed || board[r][c].flagged) return;
+            
+            if (firstClick) {
+                placeMines(r, c);
+                firstClick = false;
+                startTimer();
+            }
+            
+            if (board[r][c].mine) {
+                revealMines();
+                endGame(false);
+                return;
+            }
+            
+            revealCell(r, c);
+            checkWin();
+        }
+
+        function revealCell(r, c) {
+            if (r < 0 || r >= rows || c < 0 || c >= cols || board[r][c].revealed || board[r][c].flagged) {
+                return;
+            }
+            
+            board[r][c].revealed = true;
+            cellsRevealed++;
+            
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            cell.classList.add('revealed');
+            
+            if (board[r][c].count > 0) {
+                cell.textContent = board[r][c].count;
+                cell.dataset.count = board[r][c].count;
+            } else {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        revealCell(r + dr, c + dc);
+                    }
+                }
+            }
+        }
+
+        function handleFlag(r, c) {
+            if (gameOver || board[r][c].revealed) return;
+            
+            board[r][c].flagged = !board[r][c].flagged;
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            
+            if (board[r][c].flagged) {
+                cell.classList.add('flagged');
+                flagsPlaced++;
+            } else {
+                cell.classList.remove('flagged');
+                flagsPlaced--;
+            }
+            
+            document.getElementById('minesLeft').textContent = mines - flagsPlaced;
+        }
+
+        function revealMines() {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c].mine) {
+                        const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        cell.classList.add('mine', 'revealed');
+                    }
+                }
+            }
+        }
+
+        function checkWin() {
+            const totalCells = rows * cols;
+            if (cellsRevealed === totalCells - mines) {
+                endGame(true);
+            }
+        }
+
+        function endGame(won) {
+            gameOver = true;
+            clearInterval(timerInterval);
+            
+            const overlay = document.getElementById('gameOverOverlay');
+            const message = document.getElementById('gameOverMessage');
+            const text = document.getElementById('gameOverText');
+            
+            if (won) {
+                text.textContent = '🎉 YOU WIN! 🎉';
+                message.classList.add('win');
+            } else {
+                text.textContent = '💥 GAME OVER 💥';
+                message.classList.remove('win');
+            }
+            
+            overlay.classList.add('show');
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                document.getElementById('timer').textContent = timeElapsed;
+            }, 1000);
+        }
+
+        newGame();
+    </script>
+</body>
+</html>
