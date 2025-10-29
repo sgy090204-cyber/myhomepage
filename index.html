@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>손가연 :: 코딩 포트폴리오</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Oswald: 림버스 테마에 어울리는 강렬한 헤드라인 폰트, Inter: 본문 가독성) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 커스텀 스타일 */
+        body {
+            /* 림버스 컴퍼니의 어두운 배경색 */
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* 림버스 테마 커스텀 색상 */
+        .limbus-red { color: #d90000; }
+        .limbus-yellow { color: #ffc400; }
+        .bg-limbus-red { background-color: #d90000; }
+        .border-limbus-red { border-color: #d90000; }
+        .border-limbus-yellow { border-color: #ffc400; }
+        .hover\:text-limbus-red:hover { color: #d90000; }
+        .hover\:border-limbus-red:hover { border-color: #d90000; }
+
+        /* 헤드라인 폰트 (Oswald) */
+        .font-headline {
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em; /* 자간을 살짝 넓혀 스타일리시하게 */
+        }
+
+        /* 헤더 배경 (반투명) */
+        header {
+            background-color: rgba(26, 26, 26, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* 프로젝트 카드 스타일 */
+        .project-card {
+            background-color: #242424;
+            border: 1px solid #3a3a3a;
+            transition: all 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-color: #d90000;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- 1. 헤더 (네비게이션) -->
+    <header class="sticky top-0 z-50 w-full border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- 로고/이름 -->
+                <div class="text-2xl font-headline font-bold text-white">
+                    <a href="#">손가연 <span class="text-gray-400">// CODER</span></a>
+                </div>
+                
+                <!-- 데스크탑 네비게이션 -->
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#about" class="font-headline text-gray-300 hover:text-limbus-red transition-colors">소개 (ABOUT)</a>
+                    <a href="#projects" class="font-headline text-gray-300 hover:text-limbus-red transition-colors">프로젝트 (PROJECTS)</a>
+                    <a href="#contact" class="font-headline text-gray-300 hover:text-limbus-red transition-colors">연락 (CONTACT)</a>
+                </nav>
+                
+                <!-- 모바일 메뉴 버튼 (햄버거) -->
+                <button id="mobile-menu-btn" class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 모바일 메뉴 (숨겨진 상태) -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2">
+                <a href="#about" class="block py-2 font-headline text-gray-300 hover:text-limbus-red">소개 (ABOUT)</a>
+                <a href="#projects" class="block py-2 font-headline text-gray-300 hover:text-limbus-red">프로젝트 (PROJECTS)</a>
+                <a href="#contact" class="block py-2 font-headline text-gray-300 hover:text-limbus-red">연락 (CONTACT)</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. 메인 섹션 (Hero) -->
+    <main>
+        <section id="hero" class="h-[70vh] min-h-[500px] flex items-center justify-center text-center px-6">
+            <div class="max-w-3xl">
+                <h1 class="text-5xl md:text-7xl lg:text-8xl font-headline font-bold text-white tracking-wider">
+                    SON GA-YEON
+                </h1>
+                <p class="mt-4 text-xl md:text-2xl font-headline limbus-red tracking-widest">
+                    MYUNGSHIN G.H.S. STUDENT // CODER
+                </p>
+                <p class="mt-6 text-lg md:text-xl text-gray-300 max-w-lg mx-auto leading-relaxed">
+                    "앱과 챗봇을 만드는 1학년 코더. 제 작업 기록 보관소에 오신 것을 환영합니다."
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. 소개 (About) -->
+        <section id="about" class="py-20 md:py-32 bg-opacity-50" style="background-color: #202020;">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl md:text-5xl font-headline font-bold text-center text-white mb-12">
+                    [ 식별 ]
+                </h2>
+                <div class="max-w-3xl mx-auto bg-gray-900 p-8 md:p-12 rounded-lg border border-limbus-yellow shadow-xl">
+                    <p class="text-lg text-gray-300 leading-loose">
+                        <strong class="text-white">이름:</strong> 손가연 (Son Ga-yeon)<br>
+                        <strong class="text-white">소속:</strong> 명신여자고등학교 1학년<br>
+                        <strong class="text-white">주요 기술:</strong> Python, JavaScript, React (예시)<br>
+                        <strong class="text-white">목표:</strong> 논리적인 코드로 아이디어를 현실로 구현합니다.
+                        다양한 앱과 챗봇을 통해 기술로 문제를 해결하는 것을 즐깁니다.
+                    </p>
+                    <div class="mt-8 border-t border-gray-700 pt-6">
+                        <p class="italic text-gray-400">"코딩은 제 취미이자, 미래를 여는 열쇠입니다. 똑똑하게, 그리고 꾸준하게."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 프로젝트 (Projects) -->
+        <section id="projects" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl md:text-5xl font-headline font-bold text-center text-white mb-16">
+                    [ 작업 기록 ]
+                </h2>
+                
+                <!-- 프로젝트 그리드 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+                    
+                    <!-- 예시 프로젝트 1 -->
+                    <div class="project-card rounded-lg overflow-hidden">
+                        <div class="p-6 md:p-8">
+                            <span class="text-sm font-headline limbus-yellow">[ PROJECT_ID: 001 ]</span>
+                            <h3 class="mt-3 mb-2 text-2xl font-headline font-bold text-white">
+                                명신여고 급식 알리미 챗봇
+                            </h3>
+                            <p class="text-gray-400 leading-relaxed">
+                                카카오톡 API를 기반으로 오늘의 급식 메뉴를 알려주는 챗봇입니다. (가상 프로젝트)
+                            </p>
+                        </div>
+                        <div class="px-6 md:px-8 py-4 bg-gray-800 border-t border-gray-700">
+                            <a href="#" class="font-headline text-white hover:text-limbus-red transition-colors">
+                                자세히 보기 &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 예시 프로젝트 2 -->
+                    <div class="project-card rounded-lg overflow-hidden">
+                        <div class="p-6 md:p-8">
+                            <span class="text-sm font-headline limbus-yellow">[ PROJECT_ID: 002 ]</span>
+                            <h3 class="mt-3 mb-2 text-2xl font-headline font-bold text-white">
+                                Limbus-Style To-Do 앱
+                            </h3>
+                            <p class="text-gray-400 leading-relaxed">
+                                '오늘의 임무'를 관리하는 림버스 컴퍼니 테마의 할 일 관리 앱입니다. (React Native)
+                            </p>
+                        </div>
+                        <div class="px-6 md:px-8 py-4 bg-gray-800 border-t border-gray-700">
+                            <a href="#" class="font-headline text-white hover:text-limbus-red transition-colors">
+                                GitHub에서 보기 &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 예시 프로젝트 3 -->
+                    <div class="project-card rounded-lg overflow-hidden">
+                        <div class="p-6 md:p-8">
+                            <span class="text-sm font-headline limbus-yellow">[ PROJECT_ID: 003 ]</span>
+                            <h3 class="mt-3 mb-2 text-2xl font-headline font-bold text-white">
+                                개인 포트폴리오 (v1)
+                            </h3>
+                            <p class="text-gray-400 leading-relaxed">
+                                지금 보고 계신 이 웹사이트입니다. 반응형 HTML/CSS로 제작되었습니다.
+                            </p>
+                        </div>
+                        <div class="px-6 md:px-8 py-4 bg-gray-800 border-t border-gray-700">
+                            <a href="#" class="font-headline text-white hover:text-limbus-red transition-colors">
+                                소스 코드 &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 5. 푸터 (Contact) -->
+    <footer id="contact" class="pt-20 pb-12" style="background-color: #111111;">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-headline font-bold text-white">
+                [ 연락 ]
+            </h2>
+            <p class="mt-4 text-lg text-gray-400">
+                제 작업물이 흥미로우시다면, 언제든 연락주세요.
+            </p>
+            <div class="flex justify-center space-x-6 md:space-x-8 mt-8">
+                <!-- 예시 링크. 실제 링크로 교체하세요 -->
+                <a href="#" class="text-gray-400 hover:text-limbus-red transition-colors text-lg font-headline">GitHub</a>
+                <a href="#" class="text-gray-400 hover:text-limbus-red transition-colors text-lg font-headline">Blog</a>
+                <a href="#" class="text-gray-400 hover:text-limbus-red transition-colors text-lg font-headline">Email</a>
+            </div>
+            
+            <div class="mt-16 border-t border-gray-800 pt-8">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2025 Son Ga-yeon. All Rights Reserved.
+                </p>
+                <p class="text-gray-600 text-xs mt-2">
+                    이 사이트는 개인 포트폴리오 목적이며 Project Moon과 관련이 없습니다.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 모바일 메뉴 동작을 위한 스크립트 -->
+    <script>
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // 모바일 메뉴에서 링크 클릭 시 메뉴 닫기
+        document.querySelectorAll('#mobile-menu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobile-menu').classList.add('hidden');
+            });
+        });
+    </script>
+
+</body>
+</html>
