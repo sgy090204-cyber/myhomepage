@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limbus Scheduling Log</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJzL4BfU1O/T29K43fFfR2L/T2WvWvN2QG9F+3j+rO/V4gBw9p4t9w8O8qQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            --color-dark: #1f2937; /* slate-800 */
+            --color-black: #111827; /* gray-900 */
+            --color-accent: #b91c1c; /* red-700 */
+            --color-highlight: #f59e0b; /* amber-500 */
+            --color-text: #e5e7eb; /* gray-200 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-black);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .app-container {
+            border: 4px solid var(--color-accent); /* 림버스 스타일의 경계선 */
+            box-shadow: 0 0 20px rgba(185, 28, 28, 0.5); /* 강조된 그림자 */
+            background-color: var(--color-dark);
+        }
+        .day-cell {
+            transition: all 0.2s;
+            cursor: pointer;
+            height: 80px; /* 고정 높이 */
+        }
+        .day-cell:hover {
+            background-color: rgba(185, 28, 28, 0.2);
+        }
+        .day-cell.today {
+            border: 2px dashed var(--color-highlight);
+        }
+        .day-cell.selected {
+            background-color: var(--color-accent);
+            color: var(--color-text);
+            font-weight: 700;
+        }
+        .task-count {
+            background-color: var(--color-highlight);
+            color: var(--color-black);
+            font-size: 0.75rem;
+            padding: 1px 4px;
+            border-radius: 9999px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .task-list-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .task-list-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, arrayUnion, arrayRemove, collection, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables will be populated here
+        window.firebase = {};
+        window.db = null;
+        window.auth = null;
+        window.userId = null;
+        
+        // Firestore path helpers
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Firestore private path helper
+        window.getScheduleDocRef = (date) => {
+            if (!window.db || !window.userId) return null;
+            // Path: /artifacts/{appId}/users/{userId}/limbus_schedules/{date_id}
+            return doc(window.db, 'artifacts', appId, 'users', window.userId, 'limbus_schedules', date);
+        };
+        
+        // Firestore collection path helper
+        window.getSchedulesCollectionRef = () => {
+             if (!window.db || !window.userId) return null;
+             // Path: /artifacts/{appId}/users/{userId}/limbus_schedules
+             return collection(window.db, 'artifacts', appId, 'users', window.userId, 'limbus_schedules');
+        };
+
+        // Utility to generate a stable, short UUID for tasks
+        const generateTaskId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        window.generateTaskId = generateTaskId;
+
+        async function initFirebase() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is missing.");
+                    return;
+                }
+                const app = initializeApp(firebaseConfig);
+                window.db = getFirestore(app);
+                window.auth = getAuth(app);
+
+                // Set Firestore logging for debugging
+                setLogLevel('debug'); 
+
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(window.auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(window.auth);
+                }
+
+                // Wait for auth to be ready
+                window.auth.onAuthStateChanged(user => {
+                    if (user) {
+                        window.userId = user.uid;
+                        console.log("Firebase Auth Ready. User ID:", window.userId);
+                        // Start the app logic after successful authentication
+                        window.app.startApp(); 
+                    } else {
+                        // This case should be covered by signInAnonymously if token is missing
+                        console.error("No user signed in.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+
+        // Expose init function globally
+        window.initFirebase = initFirebase;
+    </script>
+</head>
+<body onload="initFirebase()">
+
+    <div id="app" class="app-container w-full max-w-4xl mx-4 my-8 p-6 rounded-lg">
+        <!-- Header: The Black Forest/Limbus Comp. Style Title -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-widest text-red-700 border-b-4 border-red-700 pb-2 mb-2">
+                Sin Management System
+            </h1>
+            <p id="user-id-display" class="text-sm font-mono text-gray-400">Loading User Log ID...</p>
+        </header>
+
+        <!-- Main Content Area: Calendar and Schedule -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Calendar View (Left/Top) -->
+            <div class="lg:w-3/5 p-4 border-4 border-gray-700 rounded-lg bg-slate-800">
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="app.changeMonth(-1)" class="text-amber-400 hover:text-red-700 transition duration-150 p-2 rounded-full border border-gray-700 hover:border-red-700">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h2 id="current-month-year" class="text-2xl font-bold uppercase tracking-wider text-amber-400"></h2>
+                    <button onclick="app.changeMonth(1)" class="text-amber-400 hover:text-red-700 transition duration-150 p-2 rounded-full border border-gray-700 hover:border-red-700">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 text-center text-sm gap-1">
+                    <!-- Weekday Headers -->
+                    <div class="font-bold text-red-700 uppercase p-2">Sun</div>
+                    <div class="font-bold text-amber-400 uppercase p-2">Mon</div>
+                    <div class="font-bold text-amber-400 uppercase p-2">Tue</div>
+                    <div class="font-bold text-amber-400 uppercase p-2">Wed</div>
+                    <div class="font-bold text-amber-400 uppercase p-2">Thu</div>
+                    <div class="font-bold text-amber-400 uppercase p-2">Fri</div>
+                    <div class="font-bold text-red-700 uppercase p-2">Sat</div>
+                    <!-- Days will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Schedule Log (Right/Bottom) -->
+            <div class="lg:w-2/5 p-4 border-4 border-gray-700 rounded-lg bg-slate-800 flex flex-col">
+                <h3 class="text-xl font-bold uppercase tracking-wider text-red-700 mb-4 border-b border-gray-700 pb-2">
+                    <i class="fas fa-scroll mr-2"></i>
+                    LOG: <span id="selected-date-display" class="text-amber-400">Select Date</span>
+                </h3>
+
+                <!-- Task Input -->
+                <div class="mb-4 flex gap-2">
+                    <input type="text" id="new-task-input" placeholder="새로운 징벌 (Task) 입력..." 
+                           class="flex-grow p-2 bg-slate-700 text-gray-200 border border-gray-600 rounded-md focus:border-red-700 focus:ring-1 focus:ring-red-700 transition duration-150"
+                           disabled>
+                    <button id="add-task-btn" onclick="app.addSchedule()" 
+                            class="bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-md hover:bg-amber-400 transition duration-150 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                            disabled>
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <!-- Task List -->
+                <div id="schedule-list" class="flex-grow overflow-y-auto min-h-[200px] border border-gray-700 p-2 rounded-md">
+                    <p id="no-tasks-message" class="text-gray-400 italic text-center py-4">
+                        선택된 날짜가 없습니다.
+                    </p>
+                </div>
+                
+                <!-- Loading Indicator -->
+                <p id="loading-indicator" class="text-center text-red-700 mt-4 hidden">
+                    <i class="fas fa-sync-alt fa-spin mr-2"></i> 
+                    데이터 로딩 중...
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    // Application state and logic
+    window.app = {
+        currentDate: new Date(),
+        selectedDate: null, // Date object for selected day
+        schedules: {}, // { 'YYYY-MM-DD': { tasks: [...], docId: '...' } }
+        isAuthReady: false,
+
+        // Format a Date object to YYYY-MM-DD string
+        formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        },
+
+        // Main entry point after Firebase initialization
+        startApp() {
+            this.isAuthReady = true;
+            document.getElementById('user-id-display').textContent = `USER LOG ID: ${window.userId}`;
+            this.renderCalendar();
+            this.setupRealtimeListener();
+        },
+
+        // Change the current month and re-render the calendar
+        changeMonth(delta) {
+            this.currentDate.setMonth(this.currentDate.getMonth() + delta);
+            this.renderCalendar();
+        },
+
+        // Render the main calendar grid
+        renderCalendar() {
+            const now = new Date();
+            const year = this.currentDate.getFullYear();
+            const month = this.currentDate.getMonth();
+            
+            document.getElementById('current-month-year').textContent = `${year}년 ${month + 1}월`;
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const calendarGrid = document.getElementById('calendar-grid');
+            // Clear existing days, keep the weekday headers
+            while (calendarGrid.children.length > 7) {
+                calendarGrid.removeChild(calendarGrid.lastChild);
+            }
+            
+            // Add blank cells for the start of the month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const blankCell = document.createElement('div');
+                blankCell.className = 'p-2 day-cell bg-slate-900/50';
+                calendarGrid.appendChild(blankCell);
+            }
+
+            // Add day cells
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const dateString = this.formatDate(date);
+                const isToday = dateString === this.formatDate(now);
+                const isSelected = this.selectedDate && dateString === this.formatDate(this.selectedDate);
+                const hasTasks = this.schedules[dateString] && this.schedules[dateString].tasks.length > 0;
+
+                const dayCell = document.createElement('div');
+                dayCell.classList.add('p-2', 'rounded-md', 'day-cell', 'relative', 'bg-slate-900/80', 'flex', 'flex-col', 'items-start', 'justify-start');
+                
+                if (isToday) dayCell.classList.add('today');
+                if (isSelected) dayCell.classList.add('selected', 'bg-red-700', 'hover:bg-red-600', 'text-gray-100');
+                else dayCell.classList.add('hover:bg-slate-700/50', 'text-gray-200');
+
+                dayCell.dataset.date = dateString;
+                dayCell.onclick = () => this.selectDate(date);
+
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'font-bold text-xl ' + (isSelected ? 'text-amber-200' : 'text-amber-400');
+                dayNumber.textContent = d;
+                dayCell.appendChild(dayNumber);
+
+                // Task count indicator
+                if (hasTasks) {
+                    const taskCount = this.schedules[dateString].tasks.length;
+                    const countSpan = document.createElement('span');
+                    countSpan.className = 'task-count absolute bottom-1 right-1';
+                    countSpan.textContent = taskCount;
+                    dayCell.appendChild(countSpan);
+                }
+
+                calendarGrid.appendChild(dayCell);
+            }
+            
+            // Update the schedule list for the current selection, or clear it if selection is out of view
+            if (this.selectedDate) {
+                const selectedMonth = this.selectedDate.getMonth();
+                if (selectedMonth !== month) {
+                    this.selectedDate = null;
+                }
+            }
+            this.renderScheduleList();
+        },
+        
+        // Handle date selection
+        selectDate(date) {
+            this.selectedDate = date;
+            const dateString = this.formatDate(date);
+
+            // 1. Update display and input state
+            document.getElementById('selected-date-display').textContent = dateString;
+            document.getElementById('new-task-input').disabled = false;
+            document.getElementById('add-task-btn').disabled = false;
+            document.getElementById('new-task-input').focus();
+
+            // 2. Re-render calendar to highlight the new selection
+            this.renderCalendar();
+            
+            // 3. Render the specific schedule list
+            this.renderScheduleList();
+        },
+
+        // Render the tasks for the selected date
+        renderScheduleList() {
+            const scheduleListEl = document.getElementById('schedule-list');
+            const noTasksMessage = document.getElementById('no-tasks-message');
+            
+            if (!this.selectedDate) {
+                scheduleListEl.innerHTML = '';
+                noTasksMessage.textContent = '선택된 날짜가 없습니다.';
+                noTasksMessage.classList.remove('hidden');
+                return;
+            }
+
+            const dateString = this.formatDate(this.selectedDate);
+            const data = this.schedules[dateString];
+            const tasks = data ? data.tasks : [];
+
+            scheduleListEl.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                noTasksMessage.textContent = `${dateString}에는 일정이 없습니다.`;
+                noTasksMessage.classList.remove('hidden');
+                return;
+            }
+
+            noTasksMessage.classList.add('hidden');
+
+            tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = `task-list-item flex items-center justify-between p-2 rounded-md transition duration-150 ${task.completed ? 'opacity-60 bg-slate-700/50' : 'hover:bg-slate-700'}`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 w-full">
+                        <button onclick="app.toggleTaskCompleted('${task.id}', '${dateString}')" 
+                                class="text-lg ${task.completed ? 'text-red-600' : 'text-amber-500'} hover:scale-110">
+                            <i class="${task.completed ? 'fas fa-check-square' : 'far fa-square'}"></i>
+                        </button>
+                        <span class="text-sm font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-200'} flex-grow break-all">
+                            ${task.content}
+                        </span>
+                    </div>
+                    <button onclick="app.deleteSchedule('${task.id}', '${dateString}')" 
+                            class="text-red-500 hover:text-red-300 ml-2 p-1 rounded-full hover:bg-slate-700">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                scheduleListEl.appendChild(item);
+            });
+        },
+        
+        // --- FIREBASE WRITE OPERATIONS ---
+
+        // Add a new task to the selected date
+        async addSchedule() {
+            if (!this.selectedDate || !window.db) return;
+
+            const input = document.getElementById('new-task-input');
+            const taskContent = input.value.trim();
+            if (!taskContent) return;
+
+            const dateString = this.formatDate(this.selectedDate);
+            const docRef = window.getScheduleDocRef(dateString);
+            
+            const newTask = {
+                id: window.generateTaskId(),
+                content: taskContent,
+                completed: false,
+                timestamp: Date.now()
+            };
+
+            try {
+                // Check if the document already exists in our local state to decide between setDoc or updateDoc
+                const localData = this.schedules[dateString];
+
+                if (localData && localData.tasks && localData.tasks.length > 0) {
+                     // Document exists, update by adding to the array
+                    await setDoc(docRef, { 
+                        tasks: arrayUnion(newTask) 
+                    }, { merge: true });
+
+                } else {
+                    // Document does not exist, create it
+                    await setDoc(docRef, { 
+                        date: dateString,
+                        tasks: [newTask]
+                    });
+                }
+                
+                input.value = ''; // Clear input on success
+            } catch (error) {
+                console.error("일정 추가 실패 (Failed to add schedule):", error);
+            }
+        },
+
+        // Delete a specific task
+        async deleteSchedule(taskId, dateString) {
+            if (!window.db) return;
+
+            const localData = this.schedules[dateString];
+            const taskToDelete = localData.tasks.find(t => t.id === taskId);
+            
+            if (!taskToDelete) {
+                console.error("Task not found for deletion.");
+                return;
+            }
+            
+            const docRef = window.getScheduleDocRef(dateString);
+
+            try {
+                // Delete the task by removing it from the tasks array
+                await setDoc(docRef, { 
+                    tasks: arrayRemove(taskToDelete) 
+                }, { merge: true });
+                
+            } catch (error) {
+                console.error("일정 삭제 실패 (Failed to delete schedule):", error);
+            }
+        },
+        
+        // Toggle task completion status
+        async toggleTaskCompleted(taskId, dateString) {
+            if (!window.db) return;
+
+            const localData = this.schedules[dateString];
+            const oldTasks = localData.tasks;
+            
+            const taskIndex = oldTasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+
+            // Create new task list with the toggled task
+            const newTasks = [...oldTasks];
+            const taskToUpdate = {...newTasks[taskIndex]};
+            taskToUpdate.completed = !taskToUpdate.completed;
+            newTasks[taskIndex] = taskToUpdate;
+
+            const docRef = window.getScheduleDocRef(dateString);
+
+            try {
+                // Overwrite the entire tasks array for the day
+                await setDoc(docRef, { 
+                    tasks: newTasks 
+                }, { merge: true });
+            } catch (error) {
+                console.error("상태 변경 실패 (Failed to toggle task status):", error);
+            }
+        },
+
+        // --- FIREBASE READ/LISTEN OPERATIONS ---
+
+        // Setup real-time listener for the entire schedule collection
+        setupRealtimeListener() {
+            if (!window.db || !window.userId) {
+                document.getElementById('loading-indicator').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('loading-indicator').classList.remove('hidden');
+
+            const q = query(window.getSchedulesCollectionRef());
+            
+            onSnapshot(q, (snapshot) => {
+                const newSchedules = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Ensure tasks are sorted by timestamp (or completion status)
+                    const sortedTasks = (data.tasks || [])
+                        .sort((a, b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
+                        
+                    newSchedules[doc.id] = {
+                        tasks: sortedTasks,
+                        docId: doc.id
+                    };
+                });
+                
+                this.schedules = newSchedules;
+                
+                // Re-render components that depend on schedule data
+                this.renderCalendar();
+                this.renderScheduleList();
+                
+                document.getElementById('loading-indicator').classList.add('hidden');
+            }, (error) => {
+                console.error("Firestore Snapshot Error:", error);
+                document.getElementById('loading-indicator').textContent = '데이터 로드 오류: ' + error.message;
+            });
+        }
+    };
+</script>
+</body>
+</html>
