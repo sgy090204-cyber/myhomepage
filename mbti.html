@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>림버스 컴퍼니 MBTI 테스트</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 배경 그리드 효과 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(255, 50, 50, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255, 50, 50, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 붉은 빛 효과 */
+        .red-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(220, 20, 20, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+            animation: pulse 4s infinite;
+        }
+
+        .red-glow:nth-child(1) {
+            top: -200px;
+            left: -200px;
+        }
+
+        .red-glow:nth-child(2) {
+            bottom: -200px;
+            right: -200px;
+            animation-delay: 2s;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+        }
+
+        .container {
+            background: linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(30, 15, 15, 0.95) 100%);
+            border: 2px solid rgba(220, 20, 20, 0.5);
+            border-radius: 15px;
+            box-shadow: 
+                0 0 40px rgba(220, 20, 20, 0.3),
+                inset 0 0 60px rgba(0, 0, 0, 0.5);
+            max-width: 700px;
+            width: 100%;
+            padding: 50px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #dc1414, #8b0000, #dc1414);
+            border-radius: 15px;
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #dc1414, transparent);
+        }
+
+        .limbus-logo {
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #dc1414 0%, #ff4444 50%, #dc1414 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(220, 20, 20, 0.5);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% {
+                filter: none;
+            }
+            92% {
+                filter: hue-rotate(10deg);
+                transform: translateX(2px);
+            }
+            94% {
+                filter: hue-rotate(-10deg);
+                transform: translateX(-2px);
+            }
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 0.9em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .progress-container {
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .progress-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc1414, #ff4444);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(220, 20, 20, 0.8);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .question-container {
+            animation: fadeSlide 0.6s ease;
+        }
+
+        .question-number {
+            color: #dc1414;
+            font-size: 0.9em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .question {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 35px;
+            line-height: 1.5;
+            text-shadow: 0 0 10px rgba(220, 20, 20, 0.3);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .option {
+            background: linear-gradient(135deg, rgba(30, 30, 35, 0.8) 0%, rgba(20, 20, 25, 0.8) 100%);
+            padding: 25px;
+            border: 2px solid rgba(100, 100, 100, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            color: #ddd;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(220, 20, 20, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .option:hover {
+            border-color: #dc1414;
+            background: linear-gradient(135deg, rgba(40, 20, 20, 0.9) 0%, rgba(30, 15, 15, 0.9) 100%);
+            transform: translateX(5px);
+            box-shadow: 
+                -5px 0 20px rgba(220, 20, 20, 0.4),
+                inset 0 0 20px rgba(220, 20, 20, 0.1);
+        }
+
+        .option:hover::before {
+            left: 100%;
+        }
+
+        .option:active {
+            transform: translateX(3px);
+        }
+
+        .option::after {
+            content: '▶';
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #dc1414;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover::after {
+            opacity: 1;
+            right: 20px;
+        }
+
+        .result-container {
+            text-align: center;
+            animation: fadeIn 1s ease;
+        }
+
+        .result-icon {
+            font-size: 5em;
+            margin: 20px 0;
+            filter: drop-shadow(0 0 20px rgba(220, 20, 20, 0.5));
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .result-mbti {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #dc1414 0%, #ff4444 50%, #dc1414 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            letter-spacing: 5px;
+            text-shadow: 0 0 30px rgba(220, 20, 20, 0.5);
+        }
+
+        .result-title {
+            font-size: 1.8em;
+            color: #fff;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .result-description {
+            color: #bbb;
+            line-height: 1.9;
+            margin-bottom: 40px;
+            text-align: left;
+            padding: 25px;
+            background: rgba(20, 20, 25, 0.6);
+            border-left: 3px solid #dc1414;
+            border-radius: 5px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #dc1414 0%, #8b0000 100%);
+            color: white;
+            border: 2px solid #dc1414;
+            padding: 18px 50px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 5px 20px rgba(220, 20, 20, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .restart-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .restart-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 8px 30px rgba(220, 20, 20, 0.6),
+                inset 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .restart-btn:active {
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 25px;
+            }
+
+            .limbus-logo {
+                font-size: 2em;
+            }
+
+            .question {
+                font-size: 1.2em;
+            }
+
+            .option {
+                padding: 20px;
+                font-size: 0.95em;
+            }
+
+            .result-mbti {
+                font-size: 2.5em;
+            }
+
+            .result-title {
+                font-size: 1.4em;
+            }
+        }
+
+        .sin-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(220, 20, 20, 0.2);
+            border: 1px solid #dc1414;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="red-glow"></div>
+    <div class="red-glow"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="limbus-logo">LIMBUS COMPANY</div>
+            <div class="subtitle">PERSONALITY ANALYSIS</div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-text">
+                <span>진행도</span>
+                <span id="progress-text">0/8</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+
+        <div id="test-content">
+            <div class="question-container">
+                <div class="question-number" id="question-number"></div>
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "버스 안에서 당신은?",
+                options: [
+                    { text: "다른 승객들과 대화를 나누며 시간을 보낸다", type: "E" },
+                    { text: "창밖을 바라보며 혼자 생각에 잠긴다", type: "I" }
+                ]
+            },
+            {
+                question: "임무 수행 시 당신의 접근 방식은?",
+                options: [
+                    { text: "철저한 계획과 준비를 통해 체계적으로 진행한다", type: "J" },
+                    { text: "상황에 맞춰 즉흥적으로 대응하며 유연하게 움직인다", type: "P" }
+                ]
+            },
+            {
+                question: "동료가 위기에 처했을 때",
+                options: [
+                    { text: "냉정하게 상황을 분석하고 가장 효율적인 해결책을 찾는다", type: "T" },
+                    { text: "동료의 감정을 먼저 헤아리고 함께 극복할 방법을 모색한다", type: "F" }
+                ]
+            },
+            {
+                question: "새로운 이상 현상을 마주했을 때",
+                options: [
+                    { text: "눈앞의 구체적인 현상과 데이터를 분석한다", type: "S" },
+                    { text: "현상 이면의 의미와 가능성을 탐구한다", type: "N" }
+                ]
+            },
+            {
+                question: "휴식 시간에 당신은",
+                options: [
+                    { text: "다른 수감자들과 어울리며 에너지를 충전한다", type: "E" },
+                    { text: "혼자만의 공간에서 조용히 휴식을 취한다", type: "I" }
+                ]
+            },
+            {
+                question: "미지의 영역을 탐험할 때",
+                options: [
+                    { text: "과거의 경험과 확실한 정보를 바탕으로 움직인다", type: "S" },
+                    { text: "직관과 새로운 가능성에 주목하며 탐험한다", type: "N" }
+                ]
+            },
+            {
+                question: "팀원 간 갈등이 발생했을 때",
+                options: [
+                    { text: "논리적인 근거를 제시하며 문제를 해결한다", type: "T" },
+                    { text: "서로의 입장을 이해하고 감정적 화해를 이끌어낸다", type: "F" }
+                ]
+            },
+            {
+                question: "일상에서 당신의 행동 패턴은",
+                options: [
+                    { text: "정해진 루틴과 계획에 따라 규칙적으로 생활한다", type: "J" },
+                    { text: "그날의 기분과 상황에 맞춰 자유롭게 행동한다", type: "P" }
+                ]
+            }
+        ];
+
+        const mbtiResults = {
+            "ISTJ": { title: "충실한 집행자", icon: "⚔️", sin: "색욕 SIN", desc: "규칙과 질서를 중시하며 책임감이 강합니다. 림버스 컴퍼니에서 가장 믿을 수 있는 수감자로, 주어진 임무를 완벽하게 수행합니다." },
+            "ISFJ": { title: "헌신적인 수호자", icon: "🛡️", sin: "나태 SIN", desc: "타인을 돌보고 보호하는 것을 중요하게 여깁니다. 동료들의 안전과 복지를 위해 헌신하는 진정한 수호자입니다." },
+            "INFJ": { title: "신비로운 선지자", icon: "🔮", sin: "우울 SIN", desc: "깊은 통찰력과 직관을 지녔습니다. 도시의 이면에 숨겨진 진실을 꿰뚫어보는 능력을 가진 신비로운 존재입니다." },
+            "INTJ": { title: "전략적 설계자", icon: "🗝️", sin: "오만 SIN", desc: "장기적 전략과 완벽한 계획을 추구합니다. 복잡한 상황 속에서도 최적의 해결책을 찾아내는 전략가입니다." },
+            "ISTP": { title: "냉철한 기술자", icon: "🔧", sin: "분노 SIN", desc: "실용적이고 논리적인 문제 해결사입니다. 위기 상황에서 침착하게 대처하며 즉각적인 해결책을 제시합니다." },
+            "ISFP": { title: "자유로운 예술가", icon: "🎨", sin: "탐닉 SIN", desc: "감성적이고 유연한 성향을 지녔습니다. 자신만의 방식으로 세계를 해석하며 순간을 살아가는 예술가입니다." },
+            "INFP": { title: "이상주의 몽상가", icon: "🌙", sin: "질투 SIN", desc: "이상과 가치를 중시하는 순수한 영혼입니다. 더 나은 세상을 꿈꾸며 자신만의 신념을 지켜가는 몽상가입니다." },
+            "INTP": { title: "분석적 연구자", icon: "📚", sin: "나태 SIN", desc: "논리와 분석을 통해 진리를 탐구합니다. 복잡한 이론과 추상적 개념을 다루는 데 뛰어난 연구자입니다." },
+            "ESTP": { title: "대담한 모험가", icon: "⚡", sin: "폭식 SIN", desc: "행동파이자 모험가입니다. 위험을 두려워하지 않고 현재 순간을 즐기며 새로운 경험을 추구합니다." },
+            "ESFP": { title: "열정적인 연예인", icon: "🎭", sin: "탐닉 SIN", desc: "사교적이고 활기찬 에너지를 가졌습니다. 주변을 밝게 만들고 모든 순간을 즐기는 엔터테이너입니다." },
+            "ENFP": { title: "열광적인 활동가", icon: "🔥", sin: "질투 SIN", desc: "열정과 창의성이 넘칩니다. 새로운 가능성을 탐험하고 사람들에게 영감을 주는 활동가입니다." },
+            "ENTP": { title: "혁신적인 논객", icon: "💡", sin: "오만 SIN", desc: "독창적이고 도전적입니다. 기존의 틀을 깨고 새로운 아이디어를 제시하는 혁신가입니다." },
+            "ESTJ": { title: "철저한 관리자", icon: "👔", sin: "색욕 SIN", desc: "조직과 효율을 중시합니다. 명확한 리더십으로 팀을 이끌며 목표를 달성하는 관리자입니다." },
+            "ESFJ": { title: "친화적인 조력자", icon: "🤝", sin: "폭식 SIN", desc: "사람들과의 조화를 중시합니다. 팀의 결속력을 다지고 모두를 챙기는 다정한 조력자입니다." },
+            "ENFJ": { title: "카리스마 리더", icon: "👑", sin: "우울 SIN", desc: "타고난 리더십을 지녔습니다. 사람들을 이끌고 영감을 주며 공동의 목표를 향해 나아가게 합니다." },
+            "ENTJ": { title: "강력한 지휘관", icon: "⚡", sin: "분노 SIN", desc: "결단력 있고 강력한 리더입니다. 명확한 비전으로 조직을 이끌며 목표를 달성하는 지휘관입니다." }
+        };
+
+        let currentQuestion = 0;
+        let answers = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+        function updateProgress() {
+            const progress = (currentQuestion / questions.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `${currentQuestion}/${questions.length}`;
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('question-number').textContent = `QUESTION ${currentQuestion + 1}`;
+            document.getElementById('question').textContent = q.question;
+            
+            const optionsHtml = q.options.map((opt, idx) => 
+                `<div class="option" onclick="selectAnswer('${opt.type}')">${opt.text}</div>`
+            ).join('');
+            
+            document.getElementById('options').innerHTML = optionsHtml;
+            updateProgress();
+        }
+
+        function selectAnswer(type) {
+            answers[type]++;
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                const container = document.querySelector('.question-container');
+                container.style.animation = 'none';
+                setTimeout(() => {
+                    container.style.animation = 'fadeSlide 0.6s ease';
+                    showQuestion();
+                }, 10);
+            } else {
+                showResult();
+            }
+        }
+
+        function calculateMBTI() {
+            let mbti = '';
+            mbti += answers.E > answers.I ? 'E' : 'I';
+            mbti += answers.S > answers.N ? 'S' : 'N';
+            mbti += answers.T > answers.F ? 'T' : 'F';
+            mbti += answers.J > answers.P ? 'J' : 'P';
+            return mbti;
+        }
+
+        function showResult() {
+            const mbti = calculateMBTI();
+            const result = mbtiResults[mbti];
+            
+            document.getElementById('test-content').innerHTML = `
+                <div class="result-container">
+                    <div class="result-icon">${result.icon}</div>
+                    <div class="result-mbti">${mbti}</div>
+                    <div class="result-title">${result.title}</div>
+                    <div class="sin-badge">${result.sin}</div>
+                    <div class="result-description">${result.desc}</div>
+                    <button class="restart-btn" onclick="restart()">재분석 시작</button>
+                </div>
+            `;
+            document.getElementById('progress-text').textContent = `${questions.length}/${questions.length}`;
+            updateProgress();
+        }
+
+        function restart() {
+            currentQuestion = 0;
+            answers = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            document.getElementById('test-content').innerHTML = `
+                <div class="question-container">
+                    <div class="question-number" id="question-number"></div>
+                    <div class="question" id="question"></div>
+                    <div class="options" id="options"></div>
+                </div>
+            `;
+            showQuestion();
+        }
+
+        showQuestion();
+    </script>
+</body>
+</html>
